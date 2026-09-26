@@ -1,10 +1,6 @@
 import axios from 'axios'
 
-// S9: Fail loudly in production if the API base URL is not configured.
-const _baseURL = import.meta.env.VITE_API_URL ?? ''
-if (!_baseURL && import.meta.env.PROD) {
-  console.error('[EchoTrace] VITE_API_URL is not set. API calls will fail in production.')
-}
+const _baseURL = import.meta.env.VITE_API_URL ?? '/api'
 
 const api = axios.create({
   baseURL: _baseURL,
