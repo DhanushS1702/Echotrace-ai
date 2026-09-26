@@ -1,9 +1,12 @@
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     APP_ENV: str = "development"
-    DATABASE_URL: str = "sqlite:///./echotrace.db"
+    DATABASE_URL: str = (
+        "sqlite:////tmp/echotrace.db" if os.getenv("VERCEL") else "sqlite:///./echotrace.db"
+    )
     CORS_ORIGINS: str = "http://localhost:5173"
     DEBUG: bool = False
 

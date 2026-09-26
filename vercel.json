@@ -1,0 +1,14 @@
+{
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    { "source": "/analyze", "destination": "/api/index.py" },
+    { "source": "/trust-analysis", "destination": "/api/index.py" },
+    { "source": "/history/(.*)", "destination": "/api/index.py" },
+    { "source": "/history", "destination": "/api/index.py" },
+    { "source": "/report/(.*)", "destination": "/api/index.py" },
+    { "source": "/report", "destination": "/api/index.py" },
+    { "source": "/health", "destination": "/api/index.py" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
