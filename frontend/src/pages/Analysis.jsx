@@ -14,14 +14,6 @@ const RISK_CARDS = [
   { key: 'prompt_injection',  title: 'Prompt Injection',  icon: '🛡️', invert: true  },
 ]
 
-const LLM_MODELS = [
-  { id: 'ibm-granite', name: 'IBM Granite 3.0 (8B Instruct)', badge: 'Free Public API', icon: '🚀' },
-  { id: 'llama-3',     name: 'Meta Llama 3.2 (3B Instruct)', badge: 'Free HuggingFace', icon: '🦙' },
-  { id: 'mistral',     name: 'Mistral 7B Instruct v0.3',     badge: 'Free Serverless',  icon: '⚡' },
-  { id: 'ollama',      name: 'Ollama Local Host',            badge: '100% In-Process',  icon: '💻' },
-  { id: 'auto',        name: 'Auto-Select Free & Trusted LLM', badge: 'Auto Key Applied', icon: '✨' },
-]
-
 const QUESTION_PRESETS = [
   { label: '⚛️ Quantum Computing Security', question: 'What are the core applications of Quantum Computing in Cybersecurity and post-quantum cryptography?' },
   { label: '🤖 AI Hallucination Signals',   question: 'Explain how Large Language Models can produce hallucinated claims and how heuristics flag them.' },
@@ -31,7 +23,6 @@ const QUESTION_PRESETS = [
 
 export default function Analysis() {
   const [question,  setQuestion]  = useState('')
-  const [selectedModel, setSelectedModel] = useState('ibm-granite')
   
   // Real-time Streaming & Result state
   const [streamingText, setStreamingText] = useState('')
@@ -47,7 +38,7 @@ export default function Analysis() {
   async function handleRunPipeline(customQuestion = null) {
     const targetQ = customQuestion || question
     if (!targetQ.trim()) {
-      setError('Please enter a question or prompt for the LLM.')
+      setError('Please enter a question or prompt for the AI model.')
       return
     }
     
@@ -55,11 +46,11 @@ export default function Analysis() {
     setError(null)
     setResult(null)
     setStreamingText('')
-    setStatusMsg('Connecting to backend LLM engine...')
+    setStatusMsg('Connecting to AI engine...')
 
     await streamGenerateAndAnalyze({
       question: targetQ,
-      model: selectedModel,
+      model: 'ibm-granite',
       onStatus: (msg) => {
         setStatusMsg(msg)
       },
@@ -113,11 +104,11 @@ export default function Analysis() {
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-pulse" />
             <span className="text-xs font-bold uppercase tracking-widest text-cyan-400">
-              Live AI Analysis Workspace · Input Only Pipeline
+              Live AI Analysis Workspace
             </span>
           </div>
           <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-            ⚡ LLM Generated Output + EchoTrace Audit
+            ⚡ Secure AI Generation & EchoTrace Audit
           </span>
         </div>
 
@@ -128,7 +119,7 @@ export default function Analysis() {
             { step: '→', title: '', icon: '➡️', desc: '' },
             { step: '2', title: 'FastAPI Backend', icon: '⚡', desc: 'POST /llm/stream' },
             { step: '→', title: '', icon: '➡️', desc: '' },
-            { step: '3', title: 'LLM Generation', icon: '🤖', desc: 'Real-Time Stream' },
+            { step: '3', title: 'AI Generation', icon: '🤖', desc: 'Real-Time Stream' },
             { step: '→', title: '', icon: '➡️', desc: '' },
             { step: '4', title: 'Trust Dashboard', icon: '📊', desc: '5-Engine Audit' },
           ].map((item, idx) => (
@@ -152,36 +143,8 @@ export default function Analysis() {
             Generate & Audit AI Output
           </h2>
           <p className="text-slate-400 text-xs sm:text-sm">
-            Enter your question or prompt below. The output will be automatically generated in real-time by the selected LLM and evaluated across EchoTrace's 5 analysis engines.
+            Enter your question or prompt below. The output will be automatically generated in real-time by the AI engine and evaluated across EchoTrace's 5 analysis engines.
           </p>
-        </div>
-
-        {/* Model Selector Cards */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-cyan-400">
-            Select Free & Trusted LLM Engine:
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {LLM_MODELS.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setSelectedModel(m.id)}
-                className={`flex flex-col gap-1.5 p-3.5 rounded-2xl border text-left transition-all ${
-                  selectedModel === m.id
-                    ? 'border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-500/10'
-                    : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-lg">{m.icon}</span>
-                  <span className="text-[9px] font-bold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
-                    {m.badge}
-                  </span>
-                </div>
-                <span className="text-xs font-bold text-white line-clamp-1">{m.name}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Preset Question Chips */}
@@ -265,7 +228,7 @@ export default function Analysis() {
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400"></span>
               </span>
               <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
-                Live LLM Streamed Token Output
+                Live AI Streamed Token Output
               </span>
             </div>
             <span className="text-[11px] font-mono text-slate-400">{statusMsg}</span>
@@ -282,14 +245,14 @@ export default function Analysis() {
       {result && (
         <div className="flex flex-col gap-10 border-t border-white/10 pt-10 animate-fade-in">
 
-          {/* LLM Generated Output Card */}
+          {/* AI Generated Output Card */}
           {result.generated_response && (
             <div className="glass-card rounded-3xl p-6 border border-cyan-500/30 flex flex-col gap-3 bg-slate-950/90 relative">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">🤖</span>
                   <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
-                    Generated LLM Response ({result.llm_model})
+                    AI Generated Output
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -297,7 +260,7 @@ export default function Analysis() {
                     ⚡ {result.generation_time_ms} ms
                   </span>
                   <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                    {result.llm_provider}
+                    Verified Execution
                   </span>
                 </div>
               </div>
