@@ -8,10 +8,26 @@ const api = axios.create({
   timeout: 30000,
 })
 
+// Request Interceptor with detailed logging
+api.interceptors.request.use((config) => {
+  console.log(`[API Request Outgoing] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, config.data || config.params || {})
+  return config
+})
+
+// Response Interceptor with detailed logging and error reporting
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    console.log(`[API Response Received] ${res.status} ${res.config.url}`, res.data)
+    return res
+  },
   (err) => {
-    const msg = err.response?.data?.detail ?? err.message ?? 'Unknown error'
+    const msg = err.response?.data?.detail ?? err.message ?? 'Unknown API Connection Error'
+    console.error(`[API Failure Error] ${err.config?.url || ''}`, {
+      status: err.response?.status,
+      statusText: err.response?.statusText,
+      detail: msg,
+      rawError: err
+    })
     return Promise.reject(new Error(msg))
   },
 )
@@ -19,6 +35,76 @@ api.interceptors.response.use(
 /** POST /analyze — run full trust analysis */
 export const analyzeText = (prompt, response) =>
   api.post('/analyze', { prompt, response }).then((r) => r.data)
+
+/** POST /llm/generate-and-analyze — run full end-to-end LLM -> EchoTrace Pipeline */
+export const generateAndAnalyze = (question, model = 'ibm-granite', apiKey = '') =>
+  api.post('/llm/generate-and-analyze', { question, model, api_key: apiKey }).then((r) => r.data)
+
+/**
+ * POST /llm/stream — Real-time Server-Sent Events (SSE) Token Streaming Pipeline.
+ * Streams LLM output tokens progressively into UI and completes with Trust Dashboard.
+ */
+export async function streamGenerateAndAnalyze({
+  question,
+  model = 'ibm-granite',
+  apiKey = '',
+  onToken,
+  onStatus,
+  onComplete,
+  onError,
+}) {
+  const url = `${_baseURL}/llm/stream`
+  console.log(`[SSE Stream Outgoing] POST ${url}`, { question, model })
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, model, api_key: apiKey }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} ${response.statusText}`)
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n\n')
+      buffer = lines.pop() || '' // keep unfinished part in buffer
+
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (trimmed.startsWith('data: ')) {
+          try {
+            const dataStr = trimmed.replace('data: ', '')
+            const parsed = JSON.parse(dataStr)
+
+            if (parsed.type === 'status' && onStatus) {
+              onStatus(parsed.message)
+            } else if (parsed.type === 'token' && onToken) {
+              onToken(parsed.token)
+            } else if (parsed.type === 'complete' && onComplete) {
+              console.log('[SSE Stream Complete Payload]', parsed.result)
+              onComplete(parsed.result)
+            }
+          } catch (jsonErr) {
+            console.warn('[SSE Parse Notice]', jsonErr, trimmed)
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[SSE Stream Error]', err)
+    if (onError) onError(err.message || 'Stream connection failed')
+  }
+}
 
 /** GET /history — paginated list of past analyses */
 export const getHistory = (page = 1, limit = 20) =>

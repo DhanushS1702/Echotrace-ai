@@ -58,8 +58,18 @@ with TestClient(app) as client:
     print("POST /trust-analysis status:", res_trust.status_code)
     assert res_trust.status_code == 200, res_trust.text
 
-    print("\n6. Testing DELETE /history/{id}...")
-    res_del = client.get(f"/history/{analysis_id}") # check
+    print("\n6. Testing POST /llm/generate-and-analyze...")
+    res_llm = client.post("/llm/generate-and-analyze", json={
+        "question": "What is Quantum Computing?",
+        "model": "ibm-granite"
+    })
+    print("POST /llm/generate-and-analyze status:", res_llm.status_code)
+    assert res_llm.status_code in (200, 201), res_llm.text
+    llm_data = res_llm.json()
+    print("Generated Text:", llm_data["generated_response"][:80] + "...")
+    print("Trust Score:", llm_data["trust_score"])
+
+    print("\n7. Testing DELETE /history/{id}...")
     res_del_act = client.delete(f"/history/{analysis_id}")
     print("DELETE /history status:", res_del_act.status_code)
     assert res_del_act.status_code == 204, res_del_act.text

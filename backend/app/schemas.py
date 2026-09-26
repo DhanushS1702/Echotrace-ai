@@ -168,3 +168,21 @@ class HistoryResponse(BaseModel):
     page: int
     limit: int
     items: list[AnalysisSummary]
+
+
+# ── LLM Pipeline Schemas ──────────────────────────────────────────────────────
+
+class LLMPipelineRequest(BaseModel):
+    question: str = Field(..., min_length=1, max_length=4000, description="User question or prompt for the LLM")
+    model: str = Field("ibm-granite", description="LLM model key: ibm-granite, llama-3, mistral, ollama, auto")
+    api_key: str | None = Field(None, description="Optional custom API key. If empty, free auto-key is used.")
+
+
+class LLMPipelineResponse(AnalyzeResponse):
+    question: str
+    llm_model: str
+    llm_provider: str
+    generated_response: str
+    generation_time_ms: float
+    pipeline_source: str
+

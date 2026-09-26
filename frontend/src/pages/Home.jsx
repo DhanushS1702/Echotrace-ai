@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import PaymentModal from '../components/PaymentModal'
 
 const features = [
   { icon: '🎯', title: 'Confidence Score', desc: 'Measures certainty level using hedge-word frequency, modal verb density, and passive-voice syntax trees.' },
@@ -106,6 +107,13 @@ const faqs = [
 export default function Home() {
   const [activeFaq, setActiveFaq] = useState(null)
   const [previewTab, setPreviewTab] = useState('score')
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState('Pro Team')
+
+  const handleOpenPayment = (planName) => {
+    setSelectedPlan(planName)
+    setPaymentModalOpen(true)
+  }
 
   return (
     <div className="flex flex-col gap-24 sm:gap-32">
@@ -381,8 +389,8 @@ export default function Home() {
                 </ul>
               </div>
 
-              <Link
-                to="/analysis"
+              <button
+                onClick={() => handleOpenPayment(name)}
                 className={`w-full text-center rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all ${
                   highlight
                     ? 'btn-glow text-white shadow-lg shadow-cyan-500/25 hover:scale-[1.02]'
@@ -390,7 +398,7 @@ export default function Home() {
                 }`}
               >
                 {cta}
-              </Link>
+              </button>
             </div>
           ))}
         </div>
@@ -444,6 +452,13 @@ export default function Home() {
           Analyze AI Output Now →
         </Link>
       </section>
+
+      {/* Executable Payment Gateway Modal */}
+      <PaymentModal
+        isOpen={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
+        initialPlan={selectedPlan}
+      />
 
     </div>
   )

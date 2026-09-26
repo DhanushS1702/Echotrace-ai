@@ -3,7 +3,10 @@
 @tailwind utilities;
 
 @layer base {
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     box-sizing: border-box;
   }
 
@@ -23,14 +26,17 @@
     width: 8px;
     height: 8px;
   }
+
   ::-webkit-scrollbar-track {
     background: #050816;
   }
+
   ::-webkit-scrollbar-thumb {
     background: #1E293B;
     border-radius: 9999px;
     border: 2px solid #050816;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: #00D4FF;
   }
@@ -68,18 +74,21 @@
 .gradient-text {
   background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 50%, #94A3B8 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .gradient-text-cyan {
   background: linear-gradient(135deg, #00D4FF 0%, #38BDF8 50%, #818CF8 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .gradient-text-purple {
   background: linear-gradient(135deg, #A855F7 0%, #6366F1 50%, #00D4FF 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -124,6 +133,7 @@
   .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .database import engine, Base
-from .routers import analyze, history, report, trust_analysis
+from .routers import analyze, history, report, trust_analysis, llm_pipeline
 
 
 from sqlalchemy import text
@@ -58,6 +58,7 @@ app.include_router(analyze.router)
 app.include_router(history.router)
 app.include_router(report.router)
 app.include_router(trust_analysis.router)
+app.include_router(llm_pipeline.router)
 
 
 # ── Health check ───────────────────────────────────────────────────────────────
