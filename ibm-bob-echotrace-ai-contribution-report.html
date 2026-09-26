@@ -1,0 +1,556 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IBM Bob × EchoTrace AI — Contribution Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    background: #f7f8fa;
+    color: #1f2328;
+  }
+
+  .page { max-width: 760px; margin: 0 auto; padding: 40px 24px 60px; }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 32px 28px;
+    background: #0f172a;
+    border-radius: 12px;
+    margin-bottom: 32px;
+  }
+  .header-logo {
+    flex-shrink: 0;
+    width: 52px; height: 52px;
+    background: #6366f1;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: #fff;
+    letter-spacing: -1px;
+  }
+  .header-text h1 {
+    font-size: 20px; font-weight: 700; color: #f1f5f9;
+    line-height: 1.2;
+  }
+  .header-text p { font-size: 13px; color: #94a3b8; margin-top: 3px; }
+  .badge-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 20px; letter-spacing: 0.04em;
+  }
+  .badge-purple { background: #6366f120; color: #818cf8; border: 1px solid #6366f140; }
+  .badge-blue   { background: #3b82f620; color: #60a5fa; border: 1px solid #3b82f640; }
+  .badge-green  { background: #10b98120; color: #34d399; border: 1px solid #10b98140; }
+
+  /* ── Section titles ── */
+  .section { margin-bottom: 32px; }
+  .section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #57606a;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 6px; margin-bottom: 16px;
+  }
+
+  /* ── Stat grid ── */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 16px 14px; text-align: center;
+  }
+  .stat-value { font-size: 26px; font-weight: 800; color: #6366f1; line-height: 1; }
+  .stat-label { font-size: 11px; color: #57606a; margin-top: 4px; line-height: 1.3; }
+
+  /* ── Timeline ── */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before {
+    content: ''; position: absolute; left: 7px; top: 6px; bottom: 6px;
+    width: 2px; background: #e5e7eb; border-radius: 2px;
+  }
+  .tl-item { position: relative; margin-bottom: 20px; }
+  .tl-item:last-child { margin-bottom: 0; }
+  .tl-dot {
+    position: absolute; left: -20px; top: 4px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #6366f1; border: 2px solid #f7f8fa;
+    box-shadow: 0 0 0 2px #6366f130;
+  }
+  .tl-prompt {
+    font-size: 12px; font-weight: 600; color: #6366f1;
+    margin-bottom: 2px;
+  }
+  .tl-desc { font-size: 13px; color: #1f2328; }
+  .tl-meta { font-size: 11px; color: #57606a; margin-top: 2px; }
+  .tl-files {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px;
+  }
+  .file-chip {
+    font-size: 11px; font-family: "SFMono-Regular", Consolas, monospace;
+    background: #f3f4f6; border: 1px solid #e5e7eb;
+    border-radius: 5px; padding: 2px 7px; color: #3b82d4;
+  }
+
+  /* ── Module table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; color: #57606a;
+    padding: 8px 10px; background: #f7f8fa;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  td { padding: 9px 10px; border-bottom: 1px solid #f0f1f3; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f7f8fa; }
+  .td-file { font-family: "SFMono-Regular", Consolas, monospace; color: #3b82d4; font-size: 12px; }
+  .td-lines { font-weight: 700; color: #6366f1; text-align: right; }
+  .td-tag {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 2px 7px; border-radius: 4px; white-space: nowrap;
+  }
+  .tag-engine  { background: #fef3c7; color: #92400e; }
+  .tag-router  { background: #dbeafe; color: #1e40af; }
+  .tag-schema  { background: #f3e8ff; color: #6b21a8; }
+  .tag-db      { background: #dcfce7; color: #166534; }
+  .tag-infra   { background: #f1f5f9; color: #475569; }
+  .tag-pdf     { background: #fff1f2; color: #9f1239; }
+  .tag-frontend{ background: #ecfdf5; color: #065f46; }
+
+  /* ── Findings list ── */
+  .findings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .finding-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .finding-icon { font-size: 18px; margin-bottom: 4px; }
+  .finding-title { font-size: 12px; font-weight: 700; color: #1f2328; }
+  .finding-body  { font-size: 12px; color: #57606a; margin-top: 3px; line-height: 1.5; }
+  .finding-fix {
+    margin-top: 6px; font-size: 11px; font-weight: 600;
+    color: #34d399; display: flex; align-items: flex-start; gap: 4px;
+  }
+
+  /* ── Architecture diagram ── */
+  .arch-box {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 20px; overflow-x: auto;
+  }
+  .arch-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .arch-row:last-child { margin-bottom: 0; }
+  .arch-layer {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #57606a; width: 80px; flex-shrink: 0;
+  }
+  .arch-node {
+    font-size: 11px; font-weight: 500; padding: 5px 10px;
+    border-radius: 6px; white-space: nowrap;
+  }
+  .arch-arrow { color: #94a3b8; font-size: 13px; }
+  .n-blue   { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+  .n-purple { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
+  .n-yellow { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+  .n-green  { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .n-red    { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
+  .n-slate  { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+  /* ── Quote ── */
+  .quote-box {
+    background: linear-gradient(135deg, #6366f108, #3b82f608);
+    border: 1px solid #6366f130;
+    border-left: 3px solid #6366f1;
+    border-radius: 8px; padding: 16px 18px; margin-bottom: 12px;
+  }
+  .quote-text { font-size: 13px; color: #1f2328; font-style: italic; line-height: 1.6; }
+  .quote-attr { font-size: 11px; color: #57606a; margin-top: 6px; font-style: normal; font-weight: 600; }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 48px; padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center; font-size: 11px; color: #8b949e;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  
+  <div class="header">
+    <div class="header-logo">ET</div>
+    <div class="header-text">
+      <h1>IBM Bob × EchoTrace AI</h1>
+      <p>Full-stack AI development contribution report — IBM Bob 2.0 Hackathon</p>
+      <div class="badge-row">
+        <span class="badge badge-purple">IBM Bob 2.0</span>
+        <span class="badge badge-blue">FastAPI + React</span>
+        <span class="badge badge-green">Production Ready</span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title">Project at a Glance</div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value">22</div>
+        <div class="stat-label">Python files written</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">13</div>
+        <div class="stat-label">React components &amp; pages</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">2,881</div>
+        <div class="stat-label">Lines of code generated</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">6</div>
+        <div class="stat-label">REST API endpoints</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title">System Architecture — Designed by Bob</div>
+    <div class="arch-box">
+      <div class="arch-row">
+        <div class="arch-layer">Browser</div>
+        <span class="arch-node n-green">Home.jsx</span>
+        <span class="arch-arrow">→</span>
+        <span class="arch-node n-green">Analysis.jsx</span>
+        <span class="arch-arrow">→</span>
+        <span class="arch-node n-green">Reports.jsx</span>
+      </div>
+      <div class="arch-row">
+        <div class="arch-layer">API Layer</div>
+        <span class="arch-node n-blue">POST /analyze</span>
+        <span class="arch-node n-blue">POST /trust-analysis</span>
+        <span class="arch-node n-blue">GET /report/{id}</span>
+        <span class="arch-node n-blue">GET /report/{id}/pdf</span>
+      </div>
+      <div class="arch-row">
+        <div class="arch-layer">Engines</div>
+        <span class="arch-node n-yellow">Confidence</span>
+        <span class="arch-node n-yellow">Hallucination</span>
+        <span class="arch-node n-yellow">Bias</span>
+        <span class="arch-node n-yellow">Missing Evidence</span>
+        <span class="arch-node n-yellow">Prompt Injection</span>
+      </div>
+      <div class="arch-row">
+        <div class="arch-layer">Trust Engine</div>
+        <span class="arch-node n-purple">Unsupported Claims</span>
+        <span class="arch-node n-purple">Contradictions</span>
+        <span class="arch-node n-purple">Overconfidence</span>
+        <span class="arch-node n-purple">Missing Citations</span>
+      </div>
+      <div class="arch-row">
+        <div class="arch-layer">Output</div>
+        <span class="arch-node n-red">PDF Report (ReportLab)</span>
+        <span class="arch-node n-slate">SQLite + SQLAlchemy</span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title">Development Timeline — Prompt-by-Prompt</div>
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-prompt">Prompt 1 — "Create system architecture, folder structure, API endpoints, DB schema, and 48-hour roadmap"</div>
+        <div class="tl-desc">Bob produced a complete system architecture with Mermaid diagrams, a detailed folder structure across both stacks, all five REST endpoints with request/response shapes, a two-table SQLite schema, and a 48-hour phased development roadmap.</div>
+        <div class="tl-meta">Output: architecture blueprint, DB schema, API spec, roadmap</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-prompt">Prompt 2 — "Create a production-ready architecture diagram"</div>
+        <div class="tl-desc">Bob authored a full Mermaid system architecture diagram, sequence diagram, component dependency map, deployment topology diagram, and trust-level threshold table — all rendered as structured markdown.</div>
+        <div class="tl-meta">Output: 4 Mermaid diagrams, deployment spec, weight distribution pie chart</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-prompt">Prompt 3 — "Create a FastAPI backend with POST /analyze"</div>
+        <div class="tl-desc">Bob generated the complete FastAPI backend from scratch: config, database, ORM models, Pydantic schemas, CRUD layer, five analysis engines (confidence, hallucination, bias, missing evidence, prompt injection), trust composer, three routers, and the app entry point. All files passed syntax checks.</div>
+        <div class="tl-meta">Output: 18 Python files, ~900 lines of backend code</div>
+        <div class="tl-files">
+          <span class="file-chip">main.py</span>
+          <span class="file-chip">models.py</span>
+          <span class="file-chip">schemas.py</span>
+          <span class="file-chip">crud.py</span>
+          <span class="file-chip">confidence.py</span>
+          <span class="file-chip">hallucination.py</span>
+          <span class="file-chip">bias.py</span>
+          <span class="file-chip">trust_composer.py</span>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-prompt">Prompt 4 — "Implement a lightweight Trust Engine (0–100 score)"</div>
+        <div class="tl-desc">Bob designed and implemented a standalone Trust Engine with four independent detectors, a weighted penalty formula, and a 0–100 integer scale. Extended the Pydantic schemas with six new signal models and wired the engine into the existing analysis pipeline.</div>
+        <div class="tl-meta">Output: trust_engine.py (245 lines), 6 new Pydantic schemas</div>
+        <div class="tl-files">
+          <span class="file-chip">trust_engine.py</span>
+          <span class="file-chip">TrustEngineResult</span>
+          <span class="file-chip">TrustEngineSignals</span>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-prompt">Prompt 5 — "Create a modern React dashboard (Home, Analysis, Reports)"</div>
+        <div class="tl-desc">Bob scaffolded the entire frontend: Vite + React + Tailwind config, Axios API client, utility helpers, five shared components including an SVG arc gauge and trust badge, and three full pages. The production build compiled in 1.38 s with zero warnings.</div>
+        <div class="tl-meta">Output: 13 JS/JSX files, 1,003 lines of frontend code</div>
+        <div class="tl-files">
+          <span class="file-chip">ScoreGauge.jsx</span>
+          <span class="file-chip">RiskCard.jsx</span>
+          <span class="file-chip">Analysis.jsx</span>
+          <span class="file-chip">Reports.jsx</span>
+          <span class="file-chip">client.js</span>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-prompt">Prompt 6 — "Review code, find and fix security, performance, and quality issues"</div>
+        <div class="tl-desc">Bob performed a full audit across 29 files, identified 17 issues, and applied every fix automatically. Highlights: moved table creation to a lifespan event, disabled docs in production, replaced sequential engine execution with a ThreadPoolExecutor, and replaced window.confirm with inline React state.</div>
+        <div class="tl-meta">Output: 9 security fixes, 4 performance fixes, 4 code-quality fixes — all in one session</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-prompt">Prompt 7 — "Create a Trust Analysis Engine with contradictions, overconfidence, missing citations"</div>
+        <div class="tl-desc">Bob expanded the Trust Engine with two new detectors (contradictions via negation-flip and reversal phrases; overconfidence via 12 weighted patterns), a dedicated missing-citations detector, a hallucination risk classifier, and a confidence score deriver. Added POST /trust-analysis as a stateless endpoint.</div>
+        <div class="tl-meta">Output: +270 lines in trust_engine.py, 3 new Pydantic schemas, new router</div>
+        <div class="tl-files">
+          <span class="file-chip">trust_analysis.py</span>
+          <span class="file-chip">ContradictionsSignal</span>
+          <span class="file-chip">OverconfidenceSignal</span>
+          <span class="file-chip">MissingCitationsSignal</span>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-prompt">Prompt 8 — "Create PDF report generation with download"</div>
+        <div class="tl-desc">Bob built a ReportLab-based PDF builder with a branded dark-theme layout: cover band, score bars, trust/hallucination badge pills, signal findings table, and recommendations section. Added GET /report/{id}/pdf to stream the PDF in-memory, and wired download buttons into both the Analysis and Reports pages.</div>
+        <div class="tl-meta">Output: pdf_builder.py (367 lines), new API route, frontend download buttons</div>
+        <div class="tl-files">
+          <span class="file-chip">pdf_builder.py</span>
+          <span class="file-chip">ScoreBar (flowable)</span>
+          <span class="file-chip">Badge (flowable)</span>
+          <span class="file-chip">downloadPDF()</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title">Backend Modules — Written by Bob</div>
+    <table>
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Role</th>
+          <th>Lines</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="td-file">trust_engine.py</td>
+          <td>Six-detector trust analyser — unsupported claims, uncertainty, missing evidence, specificity, contradictions, overconfidence, citations</td>
+          <td class="td-lines">561</td>
+          <td><span class="td-tag tag-engine">Engine</span></td>
+        </tr>
+        <tr>
+          <td class="td-file">pdf_builder.py</td>
+          <td>ReportLab PDF generator — dark-themed multi-section report, custom Flowables, in-memory output</td>
+          <td class="td-lines">367</td>
+          <td><span class="td-tag tag-pdf">PDF</span></td>
+        </tr>
+        <tr>
+          <td class="td-file">report.py</td>
+          <td>GET /report/{id} JSON + GET /report/{id}/pdf streaming endpoint</td>
+          <td class="td-lines">150</td>
+          <td><span class="td-tag tag-router">Router</span></td>
+        </tr>
+        <tr>
+          <td class="td-file">schemas.py</td>
+          <td>17 Pydantic models — request/response, 7 signal schemas, TrustEngineResult, TrustAnalysisResponse</td>
+          <td class="td-lines">127</td>
+          <td><span class="td-tag tag-schema">Schema</span></td>
+        </tr>
+        <tr>
+          <td class="td-file">trust_composer.py</td>
+          <td>Weighted aggregator — combines 5 engine outputs into overall trust verdict</td>
+          <td class="td-lines">97</td>
+          <td><span class="td-tag tag-engine">Engine</span></td>
+        </tr>
+        <tr>
+          <td class="td-file">bias.py</td>
+          <td>Political term + emotional amplifier + generalisation detector; compiled alternation regex (P4 fix)</td>
+          <td class="td-lines">63</td>
+          <td><span class="td-tag tag-engine">Engine</span></td>
+        </tr>
+        <tr>
+          <td class="td-file">analyze.py</td>
+          <td>POST /analyze — ThreadPoolExecutor concurrent engine runner (P1 fix)</td>
+          <td class="td-lines">62</td>
+          <td><span class="td-tag tag-router">Router</span></td>
+        </tr>
+        <tr>
+          <td class="td-file">trust_analysis.py</td>
+          <td>POST /trust-analysis — stateless dedicated trust endpoint</td>
+          <td class="td-lines">60</td>
+          <td><span class="td-tag tag-router">Router</span></td>
+        </tr>
+        <tr>
+          <td class="td-file">models.py</td>
+          <td>SQLAlchemy ORM — Analysis, Score, BiasFlag with cascade delete; timezone-aware datetime (S7 fix)</td>
+          <td class="td-lines">39</td>
+          <td><span class="td-tag tag-db">Database</span></td>
+        </tr>
+        <tr>
+          <td class="td-file">main.py</td>
+          <td>FastAPI app — CORS, lifespan startup (S2 fix), docs gated by DEBUG flag (S1 fix)</td>
+          <td class="td-lines">43</td>
+          <td><span class="td-tag tag-infra">Infra</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title">Security &amp; Quality Audit — Findings Fixed by Bob</div>
+    <div class="findings-grid">
+      <div class="finding-card">
+        <div class="finding-icon">🔴</div>
+        <div class="finding-title">S1 · API Docs Exposed in Prod</div>
+        <div class="finding-body">/docs and /redoc were accessible in all environments, exposing the full API schema.</div>
+        <div class="finding-fix">✓ Gated behind settings.DEBUG flag</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-icon">🔴</div>
+        <div class="finding-title">S2 · Table Creation at Import</div>
+        <div class="finding-body">create_all() ran at module load time, not during application startup.</div>
+        <div class="finding-fix">✓ Moved to async lifespan() event</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-icon">🔴</div>
+        <div class="finding-title">S7 · Deprecated datetime.utcnow</div>
+        <div class="finding-body">datetime.utcnow() is deprecated since Python 3.12 and produces naive datetimes.</div>
+        <div class="finding-fix">✓ Replaced with datetime.now(timezone.utc)</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-icon">🔴</div>
+        <div class="finding-title">S8 · ReDoS Surface</div>
+        <div class="finding-body">Trust engine ran all regex patterns against up to 16 KB inputs with no length guard.</div>
+        <div class="finding-fix">✓ Added 20,000-char defensive truncation</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-icon">🟡</div>
+        <div class="finding-title">P1 · Sequential Engine Execution</div>
+        <div class="finding-body">All five analysis engines ran one after another in a single thread, wasting multi-core capacity.</div>
+        <div class="finding-fix">✓ Refactored to ThreadPoolExecutor(max_workers=5)</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-icon">🟡</div>
+        <div class="finding-title">P4 · O(n) Bias Regex Loop</div>
+        <div class="finding-body">_find_matches() called re.search() per term inside analyze() — one pass per vocabulary word.</div>
+        <div class="finding-fix">✓ Replaced with two pre-compiled alternation regexes</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-icon">🟡</div>
+        <div class="finding-title">P5 · SVG Recomputed Every Render</div>
+        <div class="finding-body">ScoreGauge recomputed all arc geometry on every parent re-render.</div>
+        <div class="finding-fix">✓ Wrapped geometry in useMemo([score, size])</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-icon">🔵</div>
+        <div class="finding-title">Q2 · Broken GET /report/:id Schema</div>
+        <div class="finding-body">trust_engine field was missing from the report endpoint response, causing Pydantic validation failure.</div>
+        <div class="finding-fix">✓ Reconstructed valid trust_engine payload from DB</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title">Key Design Decisions Made by Bob</div>
+    <div class="quote-box">
+      <div class="quote-text">"Use rule-based heuristics — no external LLM calls. Zero latency, zero API cost, fully deterministic output for the hackathon demo."</div>
+      <div class="quote-attr">— Bob, Prompt 1 architecture session</div>
+    </div>
+    <div class="quote-box">
+      <div class="quote-text">"The trust score is an integer 0–100 derived from a weighted penalty formula across six independent signals. Both extremes — too uncertain AND too overconfident — erode the real confidence score."</div>
+      <div class="quote-attr">— Bob, Trust Engine design, Prompt 4 &amp; 7</div>
+    </div>
+    <div class="quote-box">
+      <div class="quote-text">"PDF generation runs entirely in memory via ReportLab. No temp files, no disk I/O — the bytes are streamed directly from FastAPI with Content-Disposition: attachment."</div>
+      <div class="quote-attr">— Bob, PDF builder design, Prompt 8</div>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title">IBM Bob Capabilities Used</div>
+    <table>
+      <thead>
+        <tr><th>Capability</th><th>How It Was Used</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Multi-file generation</strong></td>
+          <td>Generated up to 8 files in a single turn using parallel write_file calls with zero conflicts</td>
+        </tr>
+        <tr>
+          <td><strong>Architecture design</strong></td>
+          <td>Produced Mermaid system, sequence, dependency, and deployment diagrams from a one-line prompt</td>
+        </tr>
+        <tr>
+          <td><strong>Code review &amp; patching</strong></td>
+          <td>Audited 29 files across the full stack, classified 17 issues by severity, and applied all fixes in one session</td>
+        </tr>
+        <tr>
+          <td><strong>Incremental evolution</strong></td>
+          <td>Each prompt extended existing code — new detectors, new endpoints, new UI — without breaking prior work</td>
+        </tr>
+        <tr>
+          <td><strong>Test execution</strong></td>
+          <td>Ran Python syntax checks, import smoke tests, and ReportLab PDF generation checks after every change</td>
+        </tr>
+        <tr>
+          <td><strong>Subagent delegation</strong></td>
+          <td>Spawned an explore subagent to read 29 files in parallel before the audit, keeping the main context focused</td>
+        </tr>
+        <tr>
+          <td><strong>Todo tracking</strong></td>
+          <td>Maintained a live task list across 8 prompts — 29 items total, all completed</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  
+  <div class="footer">
+    Made with IBM Bob
+  </div>
+
+</div>
+</body>
+</html>
