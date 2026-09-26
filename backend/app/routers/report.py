@@ -42,8 +42,11 @@ def get_report(analysis_id: str, db: Session = Depends(get_db)):
 
     # Reconstruct a minimal trust_engine payload so the schema validates (Q2 fix)
     trust_engine_payload = {
-        "trust_score":     round(analysis.trust_score * 100),
-        "trust_level":     trust_level,
+        "trust_score":        round(analysis.trust_score * 100),
+        "trust_level":        trust_level,
+        "hallucination_risk": analysis.hallucination_risk,
+        "confidence_score":   analysis.confidence_score,
+        "explanation":        analysis.summary or "",
         "signals": {
             "unsupported_claims": {
                 "count": 0, "matches": [], "evidence_count": 0,
@@ -62,6 +65,19 @@ def get_report(analysis_id: str, db: Session = Depends(get_db)):
             "claim_specificity": {
                 "specific_claim_count": 0, "evidence_count": 0,
                 "net_unsourced": 0, "penalty": 0,
+                "explanation": "Detail available only on the original analysis.",
+            },
+            "contradictions": {
+                "count": 0, "pairs": [], "penalty": 0,
+                "explanation": "Detail available only on the original analysis.",
+            },
+            "overconfidence": {
+                "count": 0, "matches": [], "penalty": 0,
+                "explanation": "Detail available only on the original analysis.",
+            },
+            "missing_citations": {
+                "factual_sentence_count": 0, "citation_count": 0,
+                "uncited_count": 0, "penalty": 0,
                 "explanation": "Detail available only on the original analysis.",
             },
         },

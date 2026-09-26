@@ -7,10 +7,23 @@ from .database import engine, Base
 from .routers import analyze, history, report, trust_analysis
 
 
+from sqlalchemy import text
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # Create tables once at startup — not at module import time
     Base.metadata.create_all(bind=engine)
+    # Ensure missing columns in existing SQLite DB tables are migrated cleanly
+    with engine.connect() as conn:
+        try:
+            res = conn.execute(text("PRAGMA table_info(analyses)"))
+            cols = [row[1] for row in res.fetchall()]
+            if "recommendations" not in cols:
+                conn.execute(text("ALTER TABLE analyses ADD COLUMN recommendations TEXT"))
+                conn.commit()
+        except Exception as e:
+            print(f"[Startup Migration Warning]: {e}")
     yield
 
 
