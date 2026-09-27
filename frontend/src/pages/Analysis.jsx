@@ -50,7 +50,7 @@ export default function Analysis() {
 
     await streamGenerateAndAnalyze({
       question: targetQ,
-      model: 'ibm-granite',
+      model: 'google-gemini',
       onStatus: (msg) => {
         setStatusMsg(msg)
       },
@@ -104,24 +104,24 @@ export default function Analysis() {
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-pulse" />
             <span className="text-xs font-bold uppercase tracking-widest text-cyan-400">
-              Live AI Analysis Workspace
+              Real AI Model & Trust Engine Workspace
             </span>
           </div>
           <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-            ⚡ Secure AI Generation & EchoTrace Audit
+            ⚡ Real AI Generation & Instant Trust Scoring
           </span>
         </div>
 
         {/* Visual Diagram Stepper */}
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 items-center text-center">
           {[
-            { step: '1', title: 'User Input Only', icon: '💬', desc: 'Enter Prompt' },
+            { step: '1', title: 'User Input', icon: '💬', desc: 'Enter Prompt' },
             { step: '→', title: '', icon: '➡️', desc: '' },
-            { step: '2', title: 'FastAPI Backend', icon: '⚡', desc: 'POST /llm/stream' },
+            { step: '2', title: 'FastAPI Backend', icon: '⚡', desc: 'Secure Server' },
             { step: '→', title: '', icon: '➡️', desc: '' },
-            { step: '3', title: 'AI Generation', icon: '🤖', desc: 'Real-Time Stream' },
+            { step: '3', title: 'Real AI Model', icon: '🤖', desc: 'Google Gemini 3' },
             { step: '→', title: '', icon: '➡️', desc: '' },
-            { step: '4', title: 'Trust Dashboard', icon: '📊', desc: '5-Engine Audit' },
+            { step: '4', title: 'Trust Scoring', icon: '📊', desc: '0–100 Verdict' },
           ].map((item, idx) => (
             item.step === '→' ? (
               <div key={idx} className="hidden md:flex justify-center text-slate-500 text-lg">➡️</div>
@@ -140,10 +140,10 @@ export default function Analysis() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Generate & Audit AI Output
+            Generate with Real AI Model & Score Trust
           </h2>
           <p className="text-slate-400 text-xs sm:text-sm">
-            Enter your question or prompt below. The output will be automatically generated in real-time by the AI engine and evaluated across EchoTrace's 5 analysis engines.
+            Enter your question or prompt below. The response will be generated in real-time by the Google Gemini AI Model and instantly scored across EchoTrace's 5 trust analysis engines.
           </p>
         </div>
 
@@ -191,11 +191,11 @@ export default function Analysis() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                 </svg>
-                <span>Generating & Auditing…</span>
+                <span>Generating & Scoring…</span>
               </>
             ) : (
               <>
-                <span>⚡ Generate & Run EchoTrace Audit</span>
+                <span>⚡ Generate AI Response & Score Trust</span>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
@@ -228,7 +228,7 @@ export default function Analysis() {
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400"></span>
               </span>
               <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
-                Live AI Streamed Token Output
+                Live Streamed Output from Real AI Model
               </span>
             </div>
             <span className="text-[11px] font-mono text-slate-400">{statusMsg}</span>
@@ -252,7 +252,7 @@ export default function Analysis() {
                 <div className="flex items-center gap-2">
                   <span className="text-xl">🤖</span>
                   <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
-                    AI Generated Output
+                    Real AI Model Response ({result.llm_model || 'Google Gemini 3'})
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ export default function Analysis() {
                     ⚡ {result.generation_time_ms} ms
                   </span>
                   <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                    Verified Execution
+                    Scored by Trust Engine
                   </span>
                 </div>
               </div>
@@ -269,6 +269,7 @@ export default function Analysis() {
               </p>
             </div>
           )}
+
 
           {/* Trust Score Header Card */}
           <div className="glass-card rounded-3xl p-8 border border-white/10 flex flex-col md:flex-row items-center gap-8 shadow-2xl relative overflow-hidden">

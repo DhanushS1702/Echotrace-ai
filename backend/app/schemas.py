@@ -174,8 +174,8 @@ class HistoryResponse(BaseModel):
 
 class LLMPipelineRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=4000, description="User question or prompt for the LLM")
-    model: str = Field("ibm-granite", description="LLM model key: ibm-granite, llama-3, mistral, ollama, auto")
-    api_key: str | None = Field(None, description="Optional custom API key. If empty, free auto-key is used.")
+    model: str = Field("google-gemini", description="LLM model key: google-gemini, gemini-2.0-flash, gemini-1.5-flash")
+    api_key: str | None = Field(None, description="Optional custom Google Gemini API key. If empty, free Google Gemini engine is used.")
 
 
 class LLMPipelineResponse(AnalyzeResponse):

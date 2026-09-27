@@ -61,7 +61,7 @@ with TestClient(app) as client:
     print("\n6. Testing POST /llm/generate-and-analyze...")
     res_llm = client.post("/llm/generate-and-analyze", json={
         "question": "What is Quantum Computing?",
-        "model": "ibm-granite"
+        "model": "google-gemini"
     })
     print("POST /llm/generate-and-analyze status:", res_llm.status_code)
     assert res_llm.status_code in (200, 201), res_llm.text

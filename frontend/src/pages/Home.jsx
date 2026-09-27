@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import PaymentModal from '../components/PaymentModal'
+import { Link, useNavigate } from 'react-router-dom'
 
 const features = [
   { icon: '🎯', title: 'Confidence Score', desc: 'Measures certainty level using hedge-word frequency, modal verb density, and passive-voice syntax trees.' },
@@ -100,20 +99,19 @@ const faqs = [
   },
   {
     q: 'What AI models are supported?',
-    a: 'EchoTrace is model-agnostic. It works with output from GPT-4o, Claude 3.5, Gemini 1.5, Llama 3, DeepSeek, or any custom fine-tuned LLM.',
+    a: 'EchoTrace is model-agnostic. It works with output from GPT-4o, Claude 3.5, Gemini 1.5, Llama 3, DeepSeek, or any custom fine-tuned AI model.',
   }
 ]
 
 export default function Home() {
+  const navigate = useNavigate()
   const [activeFaq, setActiveFaq] = useState(null)
   const [previewTab, setPreviewTab] = useState('score')
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState('Pro Team')
 
   const handleOpenPayment = (planName) => {
-    setSelectedPlan(planName)
-    setPaymentModalOpen(true)
+    navigate(`/payment?plan=${encodeURIComponent(planName)}`)
   }
+
 
   return (
     <div className="flex flex-col gap-24 sm:gap-32">
@@ -453,13 +451,7 @@ export default function Home() {
         </Link>
       </section>
 
-      {/* Executable Payment Gateway Modal */}
-      <PaymentModal
-        isOpen={paymentModalOpen}
-        onClose={() => setPaymentModalOpen(false)}
-        initialPlan={selectedPlan}
-      />
-
     </div>
   )
 }
+
