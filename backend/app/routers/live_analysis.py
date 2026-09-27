@@ -29,6 +29,7 @@ class AnalysisMetrics(BaseModel):
 class LiveAnalysisResponse(BaseModel):
     success: bool = True
     id: str | None = None
+    ai_output: str | None = None
     analysis: AnalysisMetrics
     matched_signals: list[str]
     recommendation: str
@@ -39,6 +40,10 @@ class LiveAnalysisResponse(BaseModel):
 def _perform_live_analysis(content: str, db: Session) -> LiveAnalysisResponse:
     if not content or not content.strip():
         raise HTTPException(status_code=400, detail="Content cannot be empty.")
+
+    # 0. Generate direct AI Output for the user query/content
+    ai_output_res = llm_service.generate_llm_response(question=content)
+    ai_output = ai_output_res.get("generated_response", "").strip()
 
     # 1. Construct security prompt for LLM Analysis Engine
     llm_prompt = (
@@ -53,9 +58,10 @@ def _perform_live_analysis(content: str, db: Session) -> LiveAnalysisResponse:
         f"Provide a comprehensive, professional security audit explanation detailing your findings, key threat indicators, and evidence."
     )
 
-    # 2. Call LLM Engine (Groq Cloud API)
+    # 2. Call Real AI Model Engine
     llm_res = llm_service.generate_llm_response(question=llm_prompt)
     llm_explanation = llm_res.get("generated_response", "").strip()
+
 
     # 3. Run 5-Engine Trust Suite on user content
     engine_results = _run_engines(text=content, prompt_text=content)
@@ -146,6 +152,7 @@ def _perform_live_analysis(content: str, db: Session) -> LiveAnalysisResponse:
     return LiveAnalysisResponse(
         success=True,
         id=analysis_record.id,
+        ai_output=ai_output,
         analysis=AnalysisMetrics(
             summary=summary,
             risk_level=risk_lvl,
@@ -178,8 +185,9 @@ async def stream_live_analysis(payload: LiveAnalysisRequest, db: Session = Depen
     Server-Sent Events (SSE) streaming endpoint for live streaming token animation.
     """
     async def event_generator():
-        yield f"data: {json.dumps({'type': 'status', 'message': 'Processing input with Groq LLM Engine...'})}\n\n"
+        yield f"data: {json.dumps({'type': 'status', 'message': 'Processing input with Real AI Model...'})}\n\n"
         await asyncio.sleep(0.05)
+
 
         full_result = _perform_live_analysis(payload.content, db)
         explanation = full_result.llm_explanation

@@ -45,7 +45,7 @@ export default function Analysis() {
     setError(null)
     setResult(null)
     setStreamingText('')
-    setStatusMsg('Initiating Groq LLM Analysis Engine...')
+    setStatusMsg('Initiating Real AI Model Engine...')
 
     await streamLiveAnalysis({
       content: textToAnalyze,
@@ -128,7 +128,7 @@ export default function Analysis() {
             </span>
           </div>
           <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-3.5 py-1 rounded-full border border-emerald-500/30 font-bold">
-            ⚡ LLM Analysis + 5-Engine Trust Evaluation
+            ⚡ Real AI Model + 5-Engine Trust Evaluation
           </span>
         </div>
 
@@ -136,7 +136,7 @@ export default function Analysis() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 items-center text-center">
           {[
             { step: '01', title: 'User Input', icon: '💬', desc: 'Paste Content' },
-            { step: '02', title: 'Groq LLM Engine', icon: '🤖', desc: 'Pattern Scan' },
+            { step: '02', title: 'Real AI Model', icon: '🤖', desc: 'Pattern Scan' },
             { step: '03', title: 'Trust Evaluation', icon: '⚖️', desc: '5-Engine Suite' },
             { step: '04', title: 'Risk Scoring', icon: '📊', desc: '0–100 Rating' },
             { step: '05', title: 'AI Reasoning', icon: '💡', desc: 'Audit Report' },
@@ -158,7 +158,7 @@ export default function Analysis() {
             <span>🔎</span> Live Content Analysis
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-            Paste any suspicious message, email, SMS, social media post, or communication below. Our LLM Analysis Engine will scan for phishing, scam indicators, social engineering, and trust signals in real-time.
+            Paste any suspicious message, email, SMS, social media post, or communication below. Our Real AI Model Engine will scan for phishing, scam indicators, social engineering, and trust signals in real-time.
           </p>
         </div>
 
@@ -256,7 +256,7 @@ export default function Analysis() {
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-400"></span>
               </span>
               <span className="text-xs font-extrabold uppercase tracking-wider text-cyan-300">
-                Live LLM Analysis Output Stream
+                Live Real AI Model Stream Output
               </span>
             </div>
             <span className="text-[11px] font-mono text-slate-400">{statusMsg}</span>
@@ -272,17 +272,35 @@ export default function Analysis() {
       {result && (
         <div ref={resultsRef} className="flex flex-col gap-10 border-t border-white/10 pt-10 animate-fade-in">
 
+          {/* ── REAL AI MODEL OUTPUT CARD ──────────────────────────────────── */}
+          {result.ai_output && (
+            <div className="glass-card rounded-3xl p-6 sm:p-8 border border-cyan-500/40 bg-slate-950/90 flex flex-col gap-4 shadow-2xl relative overflow-hidden">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-2xl">🤖</span>
+                  <h3 className="text-lg font-bold text-white tracking-tight">Real AI Model Output</h3>
+                </div>
+                <span className="text-xs font-mono text-cyan-300 bg-cyan-500/10 px-3.5 py-1 rounded-full border border-cyan-500/30 font-bold">
+                  Generated Response
+                </span>
+              </div>
+              <p className="text-sm font-mono text-slate-100 leading-relaxed whitespace-pre-wrap bg-slate-900/80 p-5 rounded-2xl border border-white/10 font-normal">
+                {result.ai_output}
+              </p>
+            </div>
+          )}
+
           {/* ── SECTION 2: AI Analysis Summary ──────────────────────────────── */}
           <div className="glass-card rounded-3xl p-6 sm:p-8 border border-cyan-500/30 bg-slate-950/90 flex flex-col gap-6 shadow-2xl relative overflow-hidden">
             <div className="pointer-events-none absolute -right-20 -top-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl" />
 
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <div className="flex items-center gap-2.5">
-                <span className="text-2xl">🤖</span>
-                <h3 className="text-lg font-bold text-white tracking-tight">AI Analysis Overview</h3>
+                <span className="text-2xl">📊</span>
+                <h3 className="text-lg font-bold text-white tracking-tight">AI Security Audit Overview</h3>
               </div>
               <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                Verified LLM Assessment
+                Verified AI Assessment
               </span>
             </div>
 
@@ -376,10 +394,10 @@ export default function Analysis() {
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <div className="flex items-center gap-2.5">
                 <span className="text-xl">📄</span>
-                <h3 className="text-lg font-bold text-white tracking-tight">Detailed LLM Reasoning & Security Audit</h3>
+                <h3 className="text-lg font-bold text-white tracking-tight">Detailed AI Reasoning & Security Audit</h3>
               </div>
               <span className="text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1 rounded-xl border border-white/10">
-                Engine: Groq LLM (GPT-OSS 120B)
+                Engine: Real AI Model (GPT-OSS 120B)
               </span>
             </div>
 

@@ -5,22 +5,22 @@ import re
 import urllib.request
 import urllib.error
 
-# Groq Cloud API Models (Ultra-fast LLM Inference)
-GROQ_MODELS = [
+# Official Real AI Engine Models (Ultra-fast LLM Inference)
+AI_MODELS = [
     "openai/gpt-oss-120b",
     "allam-2-7b",
     "qwen/qwen3.8-27b"
 ]
 
-def query_groq_api(prompt: str, api_key: str = "") -> str:
+
+def query_real_ai_api(prompt: str, api_key: str = "") -> str:
     """
-    Query Official Groq API using the Groq API Key from environment.
+    Query Official Real AI API using the configured API Key.
     Endpoint: https://api.groq.com/openai/v1/chat/completions
     """
     key = api_key or os.getenv("GROQ_API_KEY", "")
     if not key:
         return ""
-
 
     headers = {
         "Authorization": f"Bearer {key}",
@@ -28,14 +28,14 @@ def query_groq_api(prompt: str, api_key: str = "") -> str:
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) EchoTrace-AI/1.0"
     }
 
-    for model_name in GROQ_MODELS:
+    for model_name in AI_MODELS:
         payload = json.dumps({
             "model": model_name,
             "messages": [
                 {
                     "role": "system",
                     "content": (
-                        "You are an advanced Real AI Model powered by Groq Cloud. "
+                        "You are an advanced Real AI Model. "
                         "Provide concise, factual, precise, and accurate real-world answers "
                         "directly addressing the user prompt without meta-commentary or disclaimers."
                     )
@@ -60,14 +60,14 @@ def query_groq_api(prompt: str, api_key: str = "") -> str:
                     if text:
                         return text
         except Exception as e:
-            print(f"[Groq API Notice - {model_name}]: {e}")
+            print(f"[Real AI API Notice - {model_name}]: {e}")
 
     return ""
 
 
 def generate_dynamic_ai_response(prompt: str) -> str:
     """
-    Groq AI Synthesis Engine.
+    EchoTrace Dynamic AI Response Engine.
     Generates direct, natural, factual AI answers for user prompts across 
     science, history, technology, software engineering, geography, and general knowledge.
     """
@@ -82,10 +82,11 @@ def generate_dynamic_ai_response(prompt: str) -> str:
 
     # 2. Greetings & Bot Identity
     if p_lower in ["hi", "hello", "hey", "greetings", "hi there", "hello there"]:
-        return "Hello! I am Groq AI. How can I assist you today?"
+        return "Hello! I am EchoTrace Real AI. How can I assist you today?"
 
     if any(k in p_lower for k in ["who are you", "what are you", "your name"]):
-        return "I am Groq AI, an advanced language model assistant powered by high-speed Groq Cloud hardware."
+        return "I am EchoTrace Real AI, an advanced language model assistant designed for high-precision content generation and security evaluation."
+
 
     if "joke" in p_lower:
         return "Why don't scientists trust atoms? Because they make up everything!"
@@ -263,32 +264,32 @@ def generate_dynamic_ai_response(prompt: str) -> str:
         )
 
 
-def generate_llm_response(question: str, model_key: str = "groq-ai", api_key: str = "") -> dict:
+def generate_llm_response(question: str, model_key: str = "real-ai", api_key: str = "") -> dict:
     """
-    Unified Groq AI response pipeline.
-    Queries Groq Cloud API using the provided API key (gsk_...),
-    falling back to local synthesis engine if offline.
+    Unified Real AI Model response pipeline.
+    Queries Real AI API using configured environment key, falling back to local synthesis engine if offline.
     """
     start_time = time.time()
     
-    # Query Groq API
-    generated_text = query_groq_api(question, api_key)
-    source = "groq_cloud_api"
+    # Query Real AI API
+    generated_text = query_real_ai_api(question, api_key)
+    source = "real_ai_cloud"
 
-    # If API unreachable or key not set, generate dynamic Groq AI response
+    # Fallback to local dynamic synthesis if needed
     if not generated_text or len(generated_text.strip()) < 5:
         generated_text = generate_dynamic_ai_response(question)
-        source = "groq_ai_engine"
+        source = "real_ai_engine"
 
     elapsed_ms = round((time.time() - start_time) * 1000, 2)
 
     return {
         "question": question,
-        "model_key": "groq-ai",
-        "model_name": "Groq AI (GPT-OSS 120B)",
-        "provider": "Groq Cloud",
+        "model_key": "real-ai",
+        "model_name": "Real AI Model (GPT-OSS 120B)",
+        "provider": "Real AI Engine",
         "generated_response": generated_text,
         "generation_time_ms": elapsed_ms,
         "source": source,
         "pipeline_source": source
     }
+

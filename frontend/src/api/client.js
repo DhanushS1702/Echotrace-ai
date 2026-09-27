@@ -104,8 +104,9 @@ export const analyzeText = (prompt, response) =>
   api.post('/analyze', { prompt, response }).then((r) => r.data)
 
 /** POST /llm/generate-and-analyze — run full end-to-end LLM -> EchoTrace Pipeline */
-export const generateAndAnalyze = (question, model = 'groq-ai', apiKey = '') =>
+export const generateAndAnalyze = (question, model = 'real-ai', apiKey = '') =>
   api.post('/llm/generate-and-analyze', { question, model, api_key: apiKey }).then((r) => r.data)
+
 
 
 /**
