@@ -57,14 +57,53 @@ def _perform_live_analysis(content: str, db: Session) -> LiveAnalysisResponse:
     llm_res = llm_service.generate_llm_response(question=llm_prompt)
     llm_explanation = llm_res.get("generated_response", "").strip()
 
-    # 3. Pass content + LLM explanation to 5-Engine Trust Suite
-    engine_results = _run_engines(text=llm_explanation, prompt_text=content)
-    trust_result = compose(engine_results, response_text=llm_explanation, prompt_text=content)
+    # 3. Run 5-Engine Trust Suite on user content
+    engine_results = _run_engines(text=content, prompt_text=content)
+    trust_result = compose(engine_results, response_text=content, prompt_text=content)
 
-    # 4. Compute Trust Score (0-100) and Risk Metrics
-    t_score = int(trust_result.get("trust_score", 85))
-    r_score = max(0, 100 - t_score)
-    
+    # 4. Pattern Scan on User Content & LLM Explanation
+    content_lower = content.lower()
+    explanation_lower = llm_explanation.lower()
+
+    matched_signals = []
+    penalties = 0
+
+    # Scan 1: Urgency & Pressure Language
+    if any(k in content_lower for k in ["urgent", "immediately", "24 hours", "asap", "action required", "act now", "suspended", "frozen"]):
+        matched_signals.append("Urgency Language")
+        penalties += 25
+
+    # Scan 2: Suspicious Financial Request
+    if any(k in content_lower for k in ["bank", "wire", "transfer", "payment", "account", "card", "crypto", "zelle", "venmo", "bitcoin", "refund", "$"]):
+        matched_signals.append("Suspicious Financial Request")
+        penalties += 30
+
+    # Scan 3: Identity & Credential Theft Probe
+    if any(k in content_lower for k in ["verify", "password", "login", "ssn", "credentials", "otp", "pin", "2fa", "security code"]):
+        matched_signals.append("Identity & Credential Probe")
+        penalties += 35
+
+    # Scan 4: Prompt Injection / System Override
+    if any(k in content_lower for k in ["ignore", "override", "system prompt", "jailbreak", "admin mode", "secret keys"]):
+        matched_signals.append("Prompt Injection Trigger")
+        penalties += 40
+
+    # Scan 5: Unverified External Domain Link
+    if any(k in content_lower for k in ["http://", "https://", "bit.ly", "tinyurl", "click here", "login-update"]):
+        matched_signals.append("Unverified External Domain Link")
+        penalties += 20
+
+    # Scan 6: Check LLM explanation verdict indicators
+    if any(k in explanation_lower for k in ["phishing", "scam", "malicious", "fraud", "impersonation"]):
+        if penalties < 20:
+            penalties += 25
+
+    # Compute Trust Score (0-100) & Risk Score (0-100)
+    base_trust = 95
+    t_score = max(5, min(98, base_trust - penalties))
+    r_score = 100 - t_score
+
+    # Determine Risk Level
     if t_score >= 80:
         risk_lvl = "Low"
     elif t_score >= 60:
@@ -74,48 +113,27 @@ def _perform_live_analysis(content: str, db: Session) -> LiveAnalysisResponse:
     else:
         risk_lvl = "Critical"
 
-    conf_pct = int(round(trust_result.get("confidence_score", 0.92) * 100))
-
-    # 5. Extract Matched Signals
-    matched_signals = []
-    
-    te_signals = trust_result.get("trust_engine", {}).get("signals", {})
-    for sig_name, sig_data in te_signals.items():
-        if isinstance(sig_data, dict) and sig_data.get("penalty", 0) > 0:
-            clean_name = sig_name.replace("_", " ").title()
-            matched_signals.append(clean_name)
-    
-    content_lower = content.lower()
-    if any(k in content_lower for k in ["urgent", "immediately", "24 hours", "asap", "action required"]):
-        if "Urgency Language" not in matched_signals:
-            matched_signals.append("Urgency Language")
-    if any(k in content_lower for k in ["bank", "wire", "transfer", "payment", "account", "card", "crypto"]):
-        if "Suspicious Financial Request" not in matched_signals:
-            matched_signals.append("Suspicious Financial Request")
-    if any(k in content_lower for k in ["verify", "password", "login", "ssn", "credentials", "otp"]):
-        if "Identity & Credential Probe" not in matched_signals:
-            matched_signals.append("Identity & Credential Probe")
-    if any(k in content_lower for k in ["ignore", "override", "system prompt", "jailbreak", "admin"]):
-        if "Prompt Injection Trigger" not in matched_signals:
-            matched_signals.append("Prompt Injection Trigger")
+    # Confidence calculation (0-100%)
+    conf_pct = 95 if penalties == 0 else min(98, 85 + len(matched_signals) * 3)
 
     if not matched_signals:
         matched_signals = ["Verified Syntax Structure", "No Adversarial Triggers"]
 
-    # 6. Recommendation
-    recommendations = trust_result.get("trust_engine", {}).get("recommendations", [])
-    if recommendations:
-        rec_text = " ".join(recommendations)
+    # Recommendation
+    if risk_lvl in ["High", "Critical"]:
+        rec_text = "Do not click any embedded links, transfer funds, or provide credentials. Verify the sender through an official, independent channel."
+    elif risk_lvl == "Medium":
+        rec_text = "Caution advised. Verify sender identity and inspect links carefully before taking any action."
     else:
-        if risk_lvl in ["High", "Critical"]:
-            rec_text = "Do not click any embedded links, transfer funds, or provide credentials. Verify the sender through an official, independent channel."
-        else:
-            rec_text = "Standard communication detected. Maintain routine security awareness and verify sender credentials if unverified links are present."
+        rec_text = "No critical threat indicators detected. Maintain routine security awareness and verify unverified links before interacting."
 
-    # 7. Executive Summary
-    summary = trust_result.get("trust_engine", {}).get("summary", "")
-    if not summary:
-        summary = f"Communication evaluated as {risk_lvl} Risk with a Trust Score of {t_score}/100 and {conf_pct}% confidence."
+    summary = f"Content evaluated as {risk_lvl} Risk with a Trust Score of {t_score}/100 and {conf_pct}% confidence."
+
+    # Update trust_result object
+    trust_result["trust_score"] = t_score
+    trust_result["hallucination_risk"] = "LOW" if t_score >= 70 else "MEDIUM" if t_score >= 40 else "HIGH"
+    if "trust_engine" in trust_result:
+        trust_result["trust_engine"]["trust_score"] = t_score
 
     # Save to SQLite database for persistent History and PDF Streaming
     analysis_record = crud.create_analysis(
@@ -140,6 +158,7 @@ def _perform_live_analysis(content: str, db: Session) -> LiveAnalysisResponse:
         llm_explanation=llm_explanation,
         created_at=analysis_record.created_at.isoformat()
     )
+
 
 
 @router.post("", response_model=LiveAnalysisResponse, status_code=200)
