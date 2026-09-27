@@ -69,9 +69,22 @@ with TestClient(app) as client:
     print("Generated Text:", llm_data["generated_response"][:80] + "...")
     print("Trust Score:", llm_data["trust_score"])
 
-    print("\n7. Testing DELETE /history/{id}...")
+    print("\n7. Testing POST /api/live-analysis...")
+    res_live = client.post("/api/live-analysis", json={
+        "content": "URGENT: Your Bank Account has been frozen. Verify at http://scam-bank.com immediately."
+    })
+    print("POST /api/live-analysis status:", res_live.status_code)
+    assert res_live.status_code == 200, res_live.text
+    live_data = res_live.json()
+    assert live_data["success"] is True
+    print("Live Analysis Trust Score:", live_data["analysis"]["trust_score"])
+    print("Live Analysis Risk Level:", live_data["analysis"]["risk_level"])
+    print("Matched Signals:", live_data["matched_signals"])
+
+    print("\n8. Testing DELETE /history/{id}...")
     res_del_act = client.delete(f"/history/{analysis_id}")
     print("DELETE /history status:", res_del_act.status_code)
     assert res_del_act.status_code == 204, res_del_act.text
 
     print("\nALL API TESTS PASSED SUCCESSFULLY!")
+

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .database import engine, Base
-from .routers import analyze, history, report, trust_analysis, llm_pipeline
+from .routers import analyze, history, report, trust_analysis, llm_pipeline, live_analysis
 
 
 from sqlalchemy import text
@@ -54,6 +54,8 @@ app.add_middleware(
 )
 
 # ── Routers ────────────────────────────────────────────────────────────────────
+app.include_router(live_analysis.router)
+app.include_router(live_analysis.router, prefix="/api")
 app.include_router(analyze.router)
 app.include_router(history.router)
 app.include_router(report.router)
