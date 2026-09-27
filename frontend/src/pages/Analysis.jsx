@@ -50,7 +50,7 @@ export default function Analysis() {
 
     await streamGenerateAndAnalyze({
       question: targetQ,
-      model: 'google-gemini',
+      model: 'groq-ai',
       onStatus: (msg) => {
         setStatusMsg(msg)
       },
@@ -108,7 +108,7 @@ export default function Analysis() {
             </span>
           </div>
           <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-            ⚡ Real AI Generation & Instant Trust Scoring
+            ⚡ Groq Cloud AI Generation & Instant Trust Scoring
           </span>
         </div>
 
@@ -119,7 +119,7 @@ export default function Analysis() {
             { step: '→', title: '', icon: '➡️', desc: '' },
             { step: '2', title: 'FastAPI Backend', icon: '⚡', desc: 'Secure Server' },
             { step: '→', title: '', icon: '➡️', desc: '' },
-            { step: '3', title: 'Real AI Model', icon: '🤖', desc: 'Google Gemini 3' },
+            { step: '3', title: 'Real AI Model', icon: '🤖', desc: 'Groq Cloud AI' },
             { step: '→', title: '', icon: '➡️', desc: '' },
             { step: '4', title: 'Trust Scoring', icon: '📊', desc: '0–100 Verdict' },
           ].map((item, idx) => (
@@ -135,6 +135,7 @@ export default function Analysis() {
           ))}
         </div>
       </div>
+
 
       {/* Main Input Form Section */}
       <div className="flex flex-col gap-6">

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     )
     CORS_ORIGINS: str = "http://localhost:5173"
     DEBUG: bool = False
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

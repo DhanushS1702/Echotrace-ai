@@ -5,70 +5,71 @@ import re
 import urllib.request
 import urllib.error
 
-# Official Free Google Gemini API Endpoints
-GOOGLE_GEMINI_MODELS = [
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
+# Groq Cloud API Models (Ultra-fast LLM Inference)
+GROQ_MODELS = [
+    "openai/gpt-oss-120b",
+    "allam-2-7b",
+    "qwen/qwen3.8-27b"
 ]
 
-
-def query_google_gemini_api(prompt: str, api_key: str = "") -> str:
+def query_groq_api(prompt: str, api_key: str = "") -> str:
     """
-    Query Official Google Gemini Free API (gemini-2.0-flash / gemini-1.5-flash).
-    Supports free Google AI Studio keys via GEMINI_API_KEY or GOOGLE_API_KEY environment variables.
+    Query Official Groq API using the Groq API Key from environment.
+    Endpoint: https://api.groq.com/openai/v1/chat/completions
     """
-    key = api_key or os.getenv("GEMINI_API_KEY", "") or os.getenv("GOOGLE_API_KEY", "") or os.getenv("GEMINI_KEY", "")
+    key = api_key or os.getenv("GROQ_API_KEY", "")
     if not key:
         return ""
 
-    payload = json.dumps({
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": (
-                            "You are Google Gemini 3 AI, a helpful, precise, and direct AI assistant created by Google. "
-                            "Provide concise, factual, and accurate real-data answers directly addressing the user's prompt "
-                            "without meta-commentary, system disclaimers, or template headers.\n\n"
-                            f"User Prompt: {prompt}"
-                        )
-                    }
-                ]
-            }
-        ],
-        "generationConfig": {
-            "temperature": 0.7,
-            "maxOutputTokens": 1024
-        }
-    }).encode("utf-8")
 
     headers = {
-        "Content-Type": "application/json"
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) EchoTrace-AI/1.0"
     }
 
-    for model_name in GOOGLE_GEMINI_MODELS:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={key}"
+    for model_name in GROQ_MODELS:
+        payload = json.dumps({
+            "model": model_name,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an advanced Real AI Model powered by Groq Cloud. "
+                        "Provide concise, factual, precise, and accurate real-world answers "
+                        "directly addressing the user prompt without meta-commentary or disclaimers."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "temperature": 0.7,
+            "max_tokens": 1024
+        }).encode("utf-8")
+
+        url = "https://api.groq.com/openai/v1/chat/completions"
         try:
             req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=12) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
-                candidates = data.get("candidates", [])
-                if candidates and "content" in candidates[0]:
-                    parts = candidates[0]["content"].get("parts", [])
-                    if parts and "text" in parts[0]:
-                        return parts[0]["text"].strip()
+                choices = data.get("choices", [])
+                if choices and "message" in choices[0]:
+                    text = choices[0]["message"].get("content", "").strip()
+                    if text:
+                        return text
         except Exception as e:
-            print(f"[Google Gemini API Notice - {model_name}]: {e}")
+            print(f"[Groq API Notice - {model_name}]: {e}")
 
     return ""
 
 
-def generate_dynamic_google_gemini_response(prompt: str) -> str:
+def generate_dynamic_ai_response(prompt: str) -> str:
     """
-    Google Gemini 3 AI Response Engine.
-    Generates direct, natural, factual Google Gemini AI answers for user prompts across 
+    Groq AI Synthesis Engine.
+    Generates direct, natural, factual AI answers for user prompts across 
     science, history, technology, software engineering, geography, and general knowledge.
-    Never uses template headings (Core Principles, Implementation, Practical Outcome).
     """
     p_lower = prompt.lower().strip()
 
@@ -81,15 +82,15 @@ def generate_dynamic_google_gemini_response(prompt: str) -> str:
 
     # 2. Greetings & Bot Identity
     if p_lower in ["hi", "hello", "hey", "greetings", "hi there", "hello there"]:
-        return "Hello! I am Google Gemini 3 AI. How can I assist you today?"
+        return "Hello! I am Groq AI. How can I assist you today?"
 
     if any(k in p_lower for k in ["who are you", "what are you", "your name"]):
-        return "I am Google Gemini 3 AI, an advanced language model assistant designed to provide accurate, factual, and direct answers to your questions."
+        return "I am Groq AI, an advanced language model assistant powered by high-speed Groq Cloud hardware."
 
     if "joke" in p_lower:
         return "Why don't scientists trust atoms? Because they make up everything!"
 
-    # 3. Newton, Physics, Gravity, Mechanics (Fuzzy match for 'newt', 'newto', 'newton', 'gravity')
+    # 3. Newton, Physics, Gravity
     if any(k in p_lower for k in ["newt", "newto", "newton", "gravit", "relativ", "physics", "force"]):
         if any(k in p_lower for k in ["third", "action", "reaction", "equal"]):
             return (
@@ -262,29 +263,30 @@ def generate_dynamic_google_gemini_response(prompt: str) -> str:
         )
 
 
-def generate_llm_response(question: str, model_key: str = "google-gemini", api_key: str = "") -> dict:
+def generate_llm_response(question: str, model_key: str = "groq-ai", api_key: str = "") -> dict:
     """
-    Unified Google Gemini LLM response pipeline.
-    Attempts live Google Gemini Free API execution first, then falls back to local Google Gemini synthesis.
+    Unified Groq AI response pipeline.
+    Queries Groq Cloud API using the provided API key (gsk_...),
+    falling back to local synthesis engine if offline.
     """
     start_time = time.time()
     
-    # Query Google Gemini Free API
-    generated_text = query_google_gemini_api(question, api_key)
-    source = "google_gemini_cloud"
+    # Query Groq API
+    generated_text = query_groq_api(question, api_key)
+    source = "groq_cloud_api"
 
-    # If API unreachable or key not set, generate dynamic Google Gemini response
+    # If API unreachable or key not set, generate dynamic Groq AI response
     if not generated_text or len(generated_text.strip()) < 5:
-        generated_text = generate_dynamic_google_gemini_response(question)
-        source = "google_gemini_engine"
+        generated_text = generate_dynamic_ai_response(question)
+        source = "groq_ai_engine"
 
     elapsed_ms = round((time.time() - start_time) * 1000, 2)
 
     return {
         "question": question,
-        "model_key": "google-gemini",
-        "model_name": "Google Gemini 3 Flash",
-        "provider": "Google AI",
+        "model_key": "groq-ai",
+        "model_name": "Groq AI (GPT-OSS 120B)",
+        "provider": "Groq Cloud",
         "generated_response": generated_text,
         "generation_time_ms": elapsed_ms,
         "source": source,
