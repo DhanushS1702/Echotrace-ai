@@ -10,8 +10,8 @@ export default function PaymentModal({ isOpen, onClose, initialPlan = 'Pro Team'
   const [txnDetails, setTxnDetails] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
 
-  const phoneNo = '8660791211'
-  const upiId = '8660791211@upi'
+  const phoneNo = '1800-000-0000'
+  const upiId = 'echotrace@upi'
   const recipientName = 'EchoTrace AI'
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function PaymentModal({ isOpen, onClose, initialPlan = 'Pro Team'
 
     setTimeout(() => {
       const receiptId = 'TXN-' + Math.floor(1000000000 + Math.random() * 9000000000)
-      const licenseKey = 'ET-PRO-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-8660791211'
+      const licenseKey = 'ET-PRO-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-DEMO'
       
       const receipt = {
         receiptId,
@@ -86,7 +86,7 @@ export default function PaymentModal({ isOpen, onClose, initialPlan = 'Pro Team'
 
     setTimeout(() => {
       const receiptId = 'TXN-' + Math.floor(1000000000 + Math.random() * 9000000000)
-      const licenseKey = 'ET-PRO-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-8660791211'
+      const licenseKey = 'ET-PRO-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-DEMO'
       
       const receipt = {
         receiptId,

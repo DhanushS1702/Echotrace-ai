@@ -135,11 +135,13 @@ def _perform_live_analysis(content: str, db: Session) -> LiveAnalysisResponse:
 
     summary = f"Content evaluated as {risk_lvl} Risk with a Trust Score of {t_score}/100 and {conf_pct}% confidence."
 
-    # Update trust_result object
-    trust_result["trust_score"] = t_score
+    # Update trust_result object — ensure trust_score and confidence_score are stored on 0.0-1.0 scale
+    trust_result["trust_score"] = round(t_score / 100.0, 4)
+    trust_result["confidence_score"] = round(conf_pct / 100.0, 4)
     trust_result["hallucination_risk"] = "LOW" if t_score >= 70 else "MEDIUM" if t_score >= 40 else "HIGH"
-    if "trust_engine" in trust_result:
-        trust_result["trust_engine"]["trust_score"] = t_score
+    if "trust_engine" in trust_result and isinstance(trust_result["trust_engine"], dict):
+        trust_result["trust_engine"]["trust_score"] = int(t_score)
+
 
     # Save to SQLite database for persistent History and PDF Streaming
     analysis_record = crud.create_analysis(
@@ -185,22 +187,26 @@ async def stream_live_analysis(payload: LiveAnalysisRequest, db: Session = Depen
     Server-Sent Events (SSE) streaming endpoint for live streaming token animation.
     """
     async def event_generator():
-        yield f"data: {json.dumps({'type': 'status', 'message': 'Processing input with Real AI Model...'})}\n\n"
-        await asyncio.sleep(0.05)
+        try:
+            yield f"data: {json.dumps({'type': 'status', 'message': 'Processing input with Real AI Model...'})}\n\n"
+            await asyncio.sleep(0.05)
 
+            full_result = await asyncio.to_thread(_perform_live_analysis, payload.content, db)
+            explanation = full_result.llm_explanation
+            words = explanation.split(" ")
 
-        full_result = _perform_live_analysis(payload.content, db)
-        explanation = full_result.llm_explanation
-        words = explanation.split(" ")
+            for i, word in enumerate(words):
+                chunk = word + (" " if i < len(words) - 1 else "")
+                yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
+                await asyncio.sleep(0.015)
 
-        for i, word in enumerate(words):
-            chunk = word + (" " if i < len(words) - 1 else "")
-            yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
-            await asyncio.sleep(0.015)
+            yield f"data: {json.dumps({'type': 'status', 'message': 'Evaluating Trust Engine Scores...'})}\n\n"
+            await asyncio.sleep(0.05)
 
-        yield f"data: {json.dumps({'type': 'status', 'message': 'Evaluating Trust Engine Scores...'})}\n\n"
-        await asyncio.sleep(0.05)
-
-        yield f"data: {json.dumps({'type': 'complete', 'result': full_result.model_dump()})}\n\n"
+            yield f"data: {json.dumps({'type': 'complete', 'result': full_result.model_dump()})}\n\n"
+        except Exception as e:
+            print(f"[Stream Live Analysis Error]: {e}")
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+

@@ -19,11 +19,33 @@ def get_report(analysis_id: str, db: Session = Depends(get_db)):
     if analysis is None:
         raise HTTPException(status_code=404, detail="Analysis not found.")
 
-    scores_map = {
-        s.metric: {"score": s.score, "explanation": s.explanation}
-        for s in analysis.scores
-    }
-    bias_flags = [bf.flag for bf in analysis.bias_flags]
+    # Defensively scale trust_score (0.0–1.0 float) and trust_score_100 (0–100 int)
+    raw_ts = float(analysis.trust_score or 0.0)
+    if raw_ts > 1.0:
+        trust_score_0_1 = round(min(1.0, max(0.0, raw_ts / 100.0)), 4)
+        trust_score_100 = int(min(100, max(0, round(raw_ts))))
+    else:
+        trust_score_0_1 = round(min(1.0, max(0.0, raw_ts)), 4)
+        trust_score_100 = int(min(100, max(0, round(raw_ts * 100.0))))
+
+    # Defensively scale confidence_score (0.0–1.0 float)
+    raw_cs = float(analysis.confidence_score or 0.0)
+    if raw_cs > 1.0:
+        conf_score_0_1 = round(min(1.0, max(0.0, raw_cs / 100.0)), 4)
+    else:
+        conf_score_0_1 = round(min(1.0, max(0.0, raw_cs)), 4)
+
+    scores_map = {}
+    for s in (analysis.scores or []):
+        s_val = float(s.score or 0.0)
+        if s_val > 1.0:
+            s_val = s_val / 100.0
+        scores_map[s.metric] = {
+            "score": round(min(1.0, max(0.0, s_val)), 4),
+            "explanation": s.explanation or ""
+        }
+
+    bias_flags = [bf.flag for bf in (analysis.bias_flags or [])]
 
     # Restore persisted recommendations (Q3 fix)
     try:
@@ -31,10 +53,10 @@ def get_report(analysis_id: str, db: Session = Depends(get_db)):
     except (json.JSONDecodeError, TypeError):
         stored_recs = []
 
-    trust_level = _score_to_level(analysis.trust_score)
+    trust_level = _score_to_level(trust_score_0_1)
 
     trust_report = {
-        "overall_trust_score": analysis.trust_score,
+        "overall_trust_score": trust_score_0_1,
         "trust_level":         trust_level,
         "summary":             analysis.summary or "",
         "recommendations":     stored_recs,
@@ -42,11 +64,12 @@ def get_report(analysis_id: str, db: Session = Depends(get_db)):
 
     # Reconstruct a minimal trust_engine payload so the schema validates (Q2 fix)
     trust_engine_payload = {
-        "trust_score":        round(analysis.trust_score * 100),
+        "trust_score":        trust_score_100,
         "trust_level":        trust_level,
-        "hallucination_risk": analysis.hallucination_risk,
-        "confidence_score":   analysis.confidence_score,
+        "hallucination_risk": analysis.hallucination_risk or "LOW",
+        "confidence_score":   conf_score_0_1,
         "explanation":        analysis.summary or "",
+        "summary":            analysis.summary or "",
         "signals": {
             "unsupported_claims": {
                 "count": 0, "matches": [], "evidence_count": 0,
@@ -82,15 +105,14 @@ def get_report(analysis_id: str, db: Session = Depends(get_db)):
             },
         },
         "recommendations": stored_recs,
-        "summary":         analysis.summary or "",
     }
 
     return AnalyzeResponse(
         id=analysis.id,
-        trust_score=analysis.trust_score,
-        hallucination_risk=analysis.hallucination_risk,
+        trust_score=trust_score_0_1,
+        hallucination_risk=analysis.hallucination_risk or "LOW",
         bias_flags=bias_flags,
-        confidence_score=analysis.confidence_score,
+        confidence_score=conf_score_0_1,
         summary=analysis.summary or "",
         scores=scores_map,
         trust_report=trust_report,
@@ -140,9 +162,9 @@ def download_pdf(analysis_id: str, db: Session = Depends(get_db)):
 
     scores_map = {
         s.metric: {"score": s.score, "explanation": s.explanation}
-        for s in analysis.scores
+        for s in (analysis.scores or [])
     }
-    bias_flags = [bf.flag for bf in analysis.bias_flags]
+    bias_flags = [bf.flag for bf in (analysis.bias_flags or [])]
 
     try:
         stored_recs = json.loads(analysis.recommendations or "[]")
@@ -164,26 +186,32 @@ def download_pdf(analysis_id: str, db: Session = Depends(get_db)):
     else:
         created_str = "Unknown"
 
-    pdf_bytes = build_pdf(
-        analysis_id=analysis.id,
-        prompt=analysis.prompt,
-        response=analysis.response,
-        trust_score=analysis.trust_score,
-        trust_score_100=round(analysis.trust_score * 100),
-        trust_level=trust_level,
-        hallucination_risk=analysis.hallucination_risk,
-        confidence_score=analysis.confidence_score,
-        summary=analysis.summary or "",
-        scores=scores_map,
-        bias_flags=bias_flags,
-        recommendations=stored_recs,
-        created_at=created_str,
-    )
+    try:
+        pdf_bytes = build_pdf(
+            analysis_id=analysis.id,
+            prompt=analysis.prompt or "",
+            response=analysis.response or "",
+            trust_score=analysis.trust_score or 0.0,
+            trust_score_100=round((analysis.trust_score or 0.0) * 100),
+            trust_level=trust_level,
+            hallucination_risk=analysis.hallucination_risk or "LOW",
+            confidence_score=analysis.confidence_score or 0.0,
+            summary=analysis.summary or "",
+            scores=scores_map,
+            bias_flags=bias_flags,
+            recommendations=stored_recs,
+            created_at=created_str,
+        )
+    except Exception as e:
+        print(f"[PDF Generation Error]: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate PDF report: {str(e)}")
 
-    filename = f"echotrace-report-{analysis.created_at.strftime('%Y-%m-%d') if analysis.created_at else 'report'}-{analysis.id[:8]}.pdf"
+    date_part = analysis.created_at.strftime('%Y-%m-%d') if (analysis.created_at and hasattr(analysis.created_at, 'strftime')) else 'report'
+    filename = f"echotrace-report-{date_part}-{analysis.id[:8]}.pdf"
 
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+

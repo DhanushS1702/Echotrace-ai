@@ -70,60 +70,69 @@ async def stream_generate_and_analyze(payload: LLMPipelineRequest, db: Session =
     the final EchoTrace 5-engine evaluation report.
     """
     async def event_generator():
-        # Step 1: Status Event
-        yield f"data: {json.dumps({'type': 'status', 'message': f'Querying {payload.model} LLM...'})}\n\n"
-        await asyncio.sleep(0.05)
+        try:
+            # Step 1: Status Event
+            yield f"data: {json.dumps({'type': 'status', 'message': f'Querying {payload.model} LLM...'})}\n\n"
+            await asyncio.sleep(0.05)
 
-        # Step 2: Get LLM Response
-        llm_res = llm_service.generate_llm_response(
-            question=payload.question,
-            model_key=payload.model,
-            api_key=payload.api_key or ""
-        )
-        generated_text = llm_res["generated_response"]
+            # Step 2: Get LLM Response
+            llm_res = await asyncio.to_thread(
+                llm_service.generate_llm_response,
+                question=payload.question,
+                model_key=payload.model,
+                api_key=payload.api_key or ""
+            )
+            generated_text = llm_res["generated_response"]
 
-        # Step 3: Stream tokens progressively in chunks
-        words = generated_text.split(" ")
-        for i, word in enumerate(words):
-            chunk = word + (" " if i < len(words) - 1 else "")
-            yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
-            await asyncio.sleep(0.02) # Real-time progressive token streaming
+            # Step 3: Stream tokens progressively in chunks
+            words = generated_text.split(" ")
+            for i, word in enumerate(words):
+                chunk = word + (" " if i < len(words) - 1 else "")
+                yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
+                await asyncio.sleep(0.02)
 
-        # Step 4: Status Event for EchoTrace Audit
-        yield f"data: {json.dumps({'type': 'status', 'message': 'Running EchoTrace 5-Engine Audit...'})}\n\n"
-        await asyncio.sleep(0.05)
+            # Step 4: Status Event for EchoTrace Audit
+            yield f"data: {json.dumps({'type': 'status', 'message': 'Running EchoTrace 5-Engine Audit...'})}\n\n"
+            await asyncio.sleep(0.05)
 
-        # Step 5: Run Engines & Compose Trust Verdict
-        engine_results = _run_engines(text=generated_text, prompt_text=payload.question)
-        result = compose(engine_results, response_text=generated_text, prompt_text=payload.question)
+            # Step 5: Run Engines & Compose Trust Verdict
+            def _run_full_analysis():
+                engine_results = _run_engines(text=generated_text, prompt_text=payload.question)
+                result = compose(engine_results, response_text=generated_text, prompt_text=payload.question)
+                analysis = crud.create_analysis(
+                    db,
+                    prompt=payload.question,
+                    response=generated_text,
+                    result=result
+                )
+                return analysis, result
 
-        analysis = crud.create_analysis(
-            db,
-            prompt=payload.question,
-            response=generated_text,
-            result=result
-        )
+            analysis, result = await asyncio.to_thread(_run_full_analysis)
 
-        final_payload = {
-            "id": analysis.id,
-            "trust_score": result["trust_score"],
-            "hallucination_risk": result["hallucination_risk"],
-            "bias_flags": result["bias_flags"],
-            "confidence_score": result["confidence_score"],
-            "summary": result["summary"],
-            "scores": result["scores"],
-            "trust_report": result["trust_report"],
-            "trust_engine": result["trust_engine"],
-            "created_at": analysis.created_at.isoformat(),
-            "question": payload.question,
-            "llm_model": llm_res["model_name"],
-            "llm_provider": llm_res["provider"],
-            "generated_response": generated_text,
-            "generation_time_ms": llm_res["generation_time_ms"],
-            "pipeline_source": llm_res["source"]
-        }
+            final_payload = {
+                "id": analysis.id,
+                "trust_score": result["trust_score"],
+                "hallucination_risk": result["hallucination_risk"],
+                "bias_flags": result["bias_flags"],
+                "confidence_score": result["confidence_score"],
+                "summary": result["summary"],
+                "scores": result["scores"],
+                "trust_report": result["trust_report"],
+                "trust_engine": result["trust_engine"],
+                "created_at": analysis.created_at.isoformat(),
+                "question": payload.question,
+                "llm_model": llm_res["model_name"],
+                "llm_provider": llm_res["provider"],
+                "generated_response": generated_text,
+                "generation_time_ms": llm_res["generation_time_ms"],
+                "pipeline_source": llm_res["source"]
+            }
 
-        # Step 6: Stream Final Complete Event
-        yield f"data: {json.dumps({'type': 'complete', 'result': final_payload})}\n\n"
+            # Step 6: Stream Final Complete Event
+            yield f"data: {json.dumps({'type': 'complete', 'result': final_payload})}\n\n"
+        except Exception as e:
+            print(f"[Stream LLM Pipeline Error]: {e}")
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+

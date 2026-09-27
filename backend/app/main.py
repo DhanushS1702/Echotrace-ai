@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+import traceback
 
 from .config import settings
 from .database import engine, Base
@@ -44,6 +46,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# ── Global Exception Handler ───────────────────────────────────────────────────
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    error_msg = str(exc) or exc.__class__.__name__
+    print(f"[Global Server Error on {request.url.path}]: {error_msg}\n{traceback.format_exc()}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": f"Internal Server Error: {error_msg}",
+            "error_type": exc.__class__.__name__
+        }
+    )
+
 # ── CORS ───────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
@@ -53,14 +68,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Routers ────────────────────────────────────────────────────────────────────
+# ── Routers (Supported with and without /api prefix) ──────────────────────────
 app.include_router(live_analysis.router)
 app.include_router(live_analysis.router, prefix="/api")
+
 app.include_router(analyze.router)
+app.include_router(analyze.router, prefix="/api")
+
 app.include_router(history.router)
+app.include_router(history.router, prefix="/api")
+
 app.include_router(report.router)
+app.include_router(report.router, prefix="/api")
+
 app.include_router(trust_analysis.router)
+app.include_router(trust_analysis.router, prefix="/api")
+
 app.include_router(llm_pipeline.router)
+app.include_router(llm_pipeline.router, prefix="/api")
+
 
 
 # ── Health check ───────────────────────────────────────────────────────────────

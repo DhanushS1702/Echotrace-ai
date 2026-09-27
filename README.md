@@ -98,6 +98,16 @@ echotrace-ai/
 
 ---
 
+## Security, Privacy & Data Compliance
+
+EchoTrace AI strictly adheres to enterprise AI safety and repository security guidelines:
+
+- **No Exposed Credentials**: Zero hardcoded API keys, secrets, or passwords exist in the repository. Standardized `.env.example` templates are provided.
+- **Data Compliance (Zero PII)**: All test data, sample prompts, and UI mocks are 100% synthetic. No Personally Identifiable Information (PII), confidential client data, or unpermitted scraped social media data is used.
+- **Privacy-Preserving Execution**: Trust audits run using in-process deterministic heuristic engines. User prompts and outputs are evaluated within the local execution context without sending data to unauthorized third-party services.
+
+---
+
 ## Built with IBM Bob 2.0
 
 This project was architected and built entirely using **IBM Bob** — IBM's AI software engineer.

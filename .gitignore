@@ -16,7 +16,14 @@ pip-wheel-metadata/
 
 # Environment / secrets
 .env
-*.env.local
+*.env
+*.env.*
+!.env.example
+!backend/.env.example
+*.key
+*.pem
+*.secret
+*.p12
 
 # SQLite database (runtime data)
 *.db

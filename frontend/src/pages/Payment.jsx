@@ -21,8 +21,8 @@ export default function Payment() {
   const [cardCvv, setCardCvv] = useState('')
   const [cardName, setCardName] = useState('')
 
-  const phoneNo = '8660791211'
-  const upiId = '8660791211@upi'
+  const phoneNo = '1800-000-0000'
+  const upiId = 'echotrace@upi'
   const recipientName = 'EchoTrace AI'
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function Payment() {
 
     setTimeout(() => {
       const receiptId = 'TXN-' + Math.floor(1000000000 + Math.random() * 9000000000)
-      const licenseKey = 'ET-PRO-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-8660791211'
+      const licenseKey = 'ET-PRO-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-DEMO'
       const finalUtr = paymentMethod === 'card' ? 'CARD-' + Math.floor(1000000000 + Math.random() * 9000000000) : utr.trim()
 
       const receipt = {
@@ -101,7 +101,7 @@ export default function Payment() {
 
     setTimeout(() => {
       const receiptId = 'TXN-' + Math.floor(1000000000 + Math.random() * 9000000000)
-      const licenseKey = 'ET-PRO-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-8660791211'
+      const licenseKey = 'ET-PRO-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-DEMO'
       
       const receipt = {
         receiptId,
